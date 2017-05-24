@@ -1,5 +1,5 @@
-#ifndef GET_LCP
-#define GET_LCP
+#ifndef COMPARE_KPTS
+#define COMPARE_KPTS
 
 #include <iostream>
 #include <fstream>
@@ -13,8 +13,8 @@
 using namespace std;
 typedef pcl::PointXYZ pcl_point;
 
-void get_LCP(pcl::PointCloud<pcl_point>::Ptr cloud_src, pcl::KdTreeFLANN<pcl_point>::Ptr tree, float thresh, Eigen::Matrix4f* transform, float* LCP, float* mean_distance, float* RMSE);
+void compare_kpts(keypoints1, keypoints2, &transform, &md_kpts, &RMSE_kpts);
 
-#include "get_LCP.inl"
+#include "compare_kpts.inl"
 
-#endif // GET_LCP
+#endif // COMPARE_KPTS

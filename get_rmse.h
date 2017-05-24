@@ -1,5 +1,5 @@
-#ifndef GET_LCP
-#define GET_LCP
+#ifndef GET_RMSE
+#define GET_RMSE
 
 #include <iostream>
 #include <fstream>
@@ -13,8 +13,8 @@
 using namespace std;
 typedef pcl::PointXYZ pcl_point;
 
-void get_LCP(pcl::PointCloud<pcl_point>::Ptr cloud_src, pcl::KdTreeFLANN<pcl_point>::Ptr tree, float thresh, Eigen::Matrix4f* transform, float* LCP, float* mean_distance, float* RMSE);
+void get_rmse(pcl::PointCloud<pcl_point> cloud_src, pcl::PointCloud<pcl_point> cloud_tgt, Eigen::Matrix4f* transform, float* RMSE);
 
-#include "get_LCP.inl"
+#include "get_rmse.inl"
 
-#endif // GET_LCP
+#endif // GET_MEAN_DISTANCE

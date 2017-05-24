@@ -1,30 +1,35 @@
-void get_LCP(pcl::PointCloud<pcl_point> cloud_src, pcl::PointCloud<pcl_point> cloud_tgt, Eigen::Matrix4f* transform, float thresh, float* LCP)
+void get_LCP(pcl::PointCloud<pcl_point>::Ptr cloud_src, pcl::KdTreeFLANN<pcl_point>::Ptr tree, float thresh, Eigen::Matrix4f* transform, float* LCP, float* mean_distance, float* RMSE)
 {
     //transform
-    pcl::transformPointCloud (cloud_src, cloud_src, *transform);
-    pcl::KdTreeFLANN<pcl::PointXYZ> tree;
-    pcl::PointCloud<pcl_point>::Ptr cloud_src_ptr(new pcl::PointCloud<pcl_point>);
-    *cloud_src_ptr=cloud_src;
-    tree.setInputCloud(cloud_src_ptr);
+    pcl::PointCloud<pcl_point> cloud_src_transformed;
+    pcl::transformPointCloud (*cloud_src, cloud_src_transformed, *transform);
 
     //compute LCP
 
     *LCP=0;
+    *RMSE=0;
+    *mean_distance=0;
+    int n=0;
 
     std::vector<int> pointIdxNKNSearch(1);
     std::vector<float> pointNKNSquaredDistance(1);
 
-    for (int k=0; k<cloud_tgt.size(); k++)
+    for (int k=0; k<cloud_src_transformed.size(); k++)
     {
 
-        if ( tree.nearestKSearch (cloud_tgt.points[k], 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+        if ( tree->nearestKSearch (cloud_src_transformed.points[k], 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
         {
             if(sqrt(pointNKNSquaredDistance[0])<thresh)
             {
                 *LCP=*LCP+1;
+                *mean_distance=*mean_distance+sqrt(pointNKNSquaredDistance[0]);
+                *RMSE=*RMSE+pointNKNSquaredDistance[0];
+                n++;
             }
         }
     }
 
-    *LCP=*LCP/cloud_tgt.size();
+     *mean_distance=*mean_distance/n;
+    *RMSE=sqrt(*RMSE/n);
+    *LCP=*LCP/cloud_src_transformed.size();
 }
