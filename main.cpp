@@ -11,22 +11,26 @@
 using namespace std;
 typedef pcl::PointXYZ pcl_point;
 
-void load_matrix(std:: string, Eigen::Matrix4f*);
+void load_matrix(std:: string, Eigen::Matrix4f*, float*);
 
 int main(int argc, char *argv[])
 {
 
-    int i=atoi(argv[1]);
-    int j=atoi(argv[2]);
+    int i=atoi(argv[2]);
+    int j=atoi(argv[3]);
     std::stringstream sstm;
 
     std::string file1;
     sstm.str("");
-    sstm<<"/home/julia/Documents/data_base/patio_pp_exported_data/pcd/sampled/1_04cm/SW"<<i<<".pcd";
+    sstm<<"/home/julia/Documents/data_base/hokuyo/pcd/Hokuyo_"<<i<<".pcd";
+//    sstm<<"/home/julia/Documents/data_base/leica/pcd/sampled/1_04cm/SW"<<i<<".pcd";
+//    sstm<<"/home/julia/Documents/data_base/extracts/pcd/corner.pcd";
     file1 = sstm.str();
     std::string file2;
     sstm.str("");
-    sstm<<"/home/julia/Documents/data_base/patio_pp_exported_data/pcd/sampled/1_04cm/SW"<<j<<".pcd";
+    sstm<<"/home/julia/Documents/data_base/hokuyo/pcd/Hokuyo_"<<j<<".pcd";
+//    sstm<<"/home/julia/Documents/data_base/leica/pcd/sampled/1_04cm/SW"<<j<<".pcd";
+//    sstm<<"/home/julia/Documents/data_base/extracts/pcd/corner_moved_20.pcd";
     file2 = sstm.str();
 
 
@@ -41,24 +45,38 @@ int main(int argc, char *argv[])
 
     std::string transform_name;
     sstm.str("");
-    sstm<<"/home/julia/Documents/data_base/patio_pp_exported_data/transforms/leica_sans_cible/SW"<<i<<"_SW"<<j<<".txt";
- //   sstm<<"SW3_sampled_SW2_sampled.txt";
+    sstm<<"/home/julia/Documents/data_base/hokuyo/transform/"<<argv[1]<<"/Hokuyo_"<<i<<"_Hokuyo_"<<j<<".txt";
+//    sstm<<"/home/julia/Documents/data_base/hokuyo/transform/"<<argv[1]<<"/"<<i<<"_"<<j<<".txt";
+
+//    sstm<<"/home/julia/Documents/data_base/leica/transforms/leica_sans_cible/SW"<<i<<"_SW"<<j<<".txt";
+//    sstm<<"/home/julia/Documents/data_base/extracts/transformations/NDT/corners20.txt";
     transform_name = sstm.str();
+    std::cout<<transform_name<<std::endl<<std::endl;
     std::string ground_truth_name;
     sstm.str("");
-    sstm<<"/home/julia/Documents/data_base/patio_pp_exported_data/transforms/leica/SW"<<i<<"_SW"<<j<<".txt";
+    sstm<<"/home/julia/Documents/data_base/hokuyo/transform/ground truth/"<<i<<"_"<<j<<".txt";
+//    sstm<<"/home/julia/Documents/data_base/leica/transforms/leica/SW"<<i<<"_SW"<<j<<".txt";
+//    sstm<<"/home/julia/Documents/data_base/extracts/transformations/truth_20.txt";
     ground_truth_name = sstm.str();
-
-    load_matrix(transform_name, &transform);
-    load_matrix(ground_truth_name, &truth);
+    float time=1.0;
+    float time0=0.0;
+    load_matrix(transform_name, &transform, &time);
+    load_matrix(ground_truth_name, &truth, &time0);
     std::cout<<"transform_truth : "<<std::endl<<truth<<std::endl<<std::endl<<std::endl;
     std::cout<<"transform : "<<std::endl<<transform<<std::endl<<std::endl<<std::endl;
 
     pcl::KdTreeFLANN<pcl_point>::Ptr tree_tgt(new pcl::KdTreeFLANN<pcl_point>);
     tree_tgt->setInputCloud(cloud_tgt);
 
-    float res=resolution(cloud_tgt, tree_tgt);
-    std::cout<<"resolution : "<<res<<std::endl<<std::endl;
+
+    pcl::PointCloud<pcl_point>::Ptr cloud_src_my_method(new pcl::PointCloud<pcl_point>);
+    pcl::PointCloud<pcl_point>::Ptr cloud_src_leica(new pcl::PointCloud<pcl_point>);
+
+    pcl::transformPointCloud (*cloud_src, *cloud_src_my_method, transform);
+    pcl::transformPointCloud (*cloud_src, *cloud_src_leica, truth);
+
+//    float res=resolution(cloud_tgt, tree_tgt);
+//    std::cout<<"resolution : "<<res<<std::endl<<std::endl;
 
     //compute LCP and mean distance and RMSE
 
@@ -67,10 +85,10 @@ int main(int argc, char *argv[])
     float md_truth=0;
     float RMSE=0;
     float RMSE_truth=0;
-    get_LCP(cloud_src, tree_tgt, res, &transform, &LCP, &md, &RMSE);
+    get_LCP(tree_tgt, cloud_src_my_method, 0.1, &LCP);
     float LCP_truth=0;
-    get_LCP(cloud_src, tree_tgt, res, &truth, &LCP_truth, &md_truth, &RMSE_truth);
-    float rap=abs(LCP-LCP_truth)/LCP_truth;
+    get_LCP(tree_tgt, cloud_src_leica, 0.1, &LCP_truth);
+//    float rap=abs(LCP-LCP_truth)/LCP_truth;
 
 
     //difference element to element of transformation matrix
@@ -111,11 +129,6 @@ int main(int argc, char *argv[])
     //mean diff point to point method/ground truth
 
     float error_points=0;
-    pcl::PointCloud<pcl_point>::Ptr cloud_src_my_method(new pcl::PointCloud<pcl_point>);
-    pcl::PointCloud<pcl_point>::Ptr cloud_src_leica(new pcl::PointCloud<pcl_point>);
-
-    pcl::transformPointCloud (*cloud_src, *cloud_src_my_method, transform);
-    pcl::transformPointCloud (*cloud_src, *cloud_src_leica, truth);
 
     for (int k=0; k<cloud_src->points.size(); k++)
     {
@@ -157,50 +170,53 @@ int main(int argc, char *argv[])
 
     pcl::transformPointCloud (*cloud_src, cloud_src_transformed, transform);
     float rmse0=0;
+    float md0=0;
 
     for (int k=0; k<points.size(); k++)
     {
         float diff_x=cloud_src_transformed.points[points[k]].x-cloud_tgt->points[mapa[points[k]]].x;
         float diff_y=cloud_src_transformed.points[points[k]].y-cloud_tgt->points[mapa[points[k]]].y;
         float diff_z=cloud_src_transformed.points[points[k]].z-cloud_tgt->points[mapa[points[k]]].z;
-        rmse0= rmse0+ diff_x*diff_x +diff_y*diff_y +diff_z +diff_z;
+        rmse0= rmse0+ diff_x*diff_x +diff_y*diff_y +diff_z*diff_z;
+        md0 = md0 + sqrt(diff_x*diff_x +diff_y*diff_y +diff_z*diff_z);
     }
 
+    md0=md0/points.size();
     rmse0=sqrt(rmse0/points.size());
 
     //---------------------------------------------------------------------------------------------------------
 
-    std::cout<<"LCP with Leica : "<<LCP_truth*100<<"%"<<std::endl;
-    std::cout<<"LCP with our method : "<<LCP*100<<"%"<<std::endl<<std::endl;
-    std::cout<<"relation LCP : "<<rap*100<<"%"<<std::endl<<std::endl;
+//    std::cout<<"LCP with Leica : "<<LCP_truth*100<<"%"<<std::endl;
+//    std::cout<<"LCP with our method : "<<LCP*100<<"%"<<std::endl<<std::endl;
+//    std::cout<<"relation LCP : "<<rap*100<<"%"<<std::endl<<std::endl;
 
-    std::cout<<"mean distance between source and target leica : "<<md_truth*100<<" cm"<<std::endl;
-    std::cout<<"mean distance between source and target our method : "<<md*100<<" cm"<<std::endl<<std::endl;
+//    std::cout<<"mean distance between source and target leica : "<<md_truth*100<<" cm"<<std::endl;
+//    std::cout<<"mean distance between source and target our method : "<<md*100<<" cm"<<std::endl<<std::endl;
 
-    std::cout<<"RMSE source and target leica : "<<RMSE_truth<<" m"<<std::endl;
-    std::cout<<"RMSE source and target our method : "<<RMSE<<" m"<<std::endl<<std::endl;
+//    std::cout<<"RMSE source and target leica : "<<RMSE_truth<<" m"<<std::endl;
+//    std::cout<<"RMSE source and target our method : "<<RMSE<<" m"<<std::endl<<std::endl;
 
-    std::cout<<"similarity between matrices : "<<100/(1+error)<<"%"<<std::endl<<std::endl;
+//    std::cout<<"similarity between matrices : "<<100/(1+error)<<"%"<<std::endl<<std::endl;
 
-    std::cout<<"error in translation between the two methods : "<<error_trans*100<<" cm"<<std::endl<<std::endl;
-    std::cout<<"error in rotation between the two methods : "<<err_x*180/M_PI<<"°\t"<<err_y*180/M_PI<<"°\t"<<err_z*180/M_PI<<"°"<<std::endl<<std::endl;
+//    std::cout<<"error in translation between the two methods : "<<error_trans*100<<" cm"<<std::endl<<std::endl;
+//    std::cout<<"error in rotation between the two methods : "<<err_x*180/M_PI<<"°\t"<<err_y*180/M_PI<<"°\t"<<err_z*180/M_PI<<"°"<<std::endl<<std::endl;
 
-    std::cout<<"mean difference between points after transform with our method and with leica method : "<<error_points*100<<" cm"<<std::endl<<std::endl;
-    std::cout<<"rmse with ground truth reference: "<<rmse0<<" cm"<<std::endl<<std::endl;
-    std::cout<<"rmse for ground truth: "<<rmse1<<" cm"<<std::endl<<std::endl;
+//    std::cout<<"mean difference between points after transform with our method and with leica method : "<<error_points*100<<" cm"<<std::endl<<std::endl;
+//    std::cout<<"rmse with ground truth reference: "<<rmse0<<" m"<<std::endl<<std::endl;
+//    std::cout<<"rmse for ground truth: "<<rmse1<<" m"<<std::endl<<std::endl;
+//    std::cout<<"md with ground truth reference: "<<md0<<" m"<<std::endl<<std::endl;
 
 
     ofstream file;
     file.open("evaluation/results", std::ofstream::out | std::ofstream::app);
-    file<<"\n"<<"\n"<<"\n"
-        <<"file1: "<<file1<<std::endl
-        <<"file2: "<<file2<<std::endl
-        <<"LCP truth : "<<LCP_truth<<"\tLCP : "<<LCP<<std::endl
-        <<"mean distance truth : "<<md_truth<<"\tmean distance :"<<md<<std::endl
-        <<"similarity between matrices : "<<1/(1+error)<<std::endl
-        <<"translation difference : "<<error_trans<<std::endl
-        <<"rotation difference : "<<err_x<<"\t"<<err_y<<"\t"<<err_z<<std::endl
-        <<"euclidian distance : "<<error_points<<std::endl<<std::endl;
+        file<<i<<" "<<j<<"\t"
+        <<rmse1*100<<" "<<rmse0*100<<"\t"
+        <<LCP_truth*100<<" "<<LCP*100<<"\t"
+        <<1/(1+error)<<"\t"
+        <<error_trans<<"\t"
+        <<err_x<<" "<<err_y<<" "<<err_z<<"\t"
+        <<error_points<<"\t"
+        <<time<<std::endl;
     file.close();
 
 }
@@ -208,7 +224,7 @@ int main(int argc, char *argv[])
 
 
 
-void load_matrix(std:: string file_name, Eigen::Matrix4f* matrix)
+void load_matrix(std:: string file_name, Eigen::Matrix4f* matrix, float* time)
 {
     ifstream fin;
     fin.open (file_name);
@@ -223,6 +239,8 @@ void load_matrix(std:: string file_name, Eigen::Matrix4f* matrix)
                 fin >> item;
                 res(row, col) = item;
             }
+        if (time!=0)
+            fin>>*time;
         fin.close();
     }
     *matrix=res;
