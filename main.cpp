@@ -22,12 +22,14 @@ int main(int argc, char *argv[])
 
     std::string file1;
     sstm.str("");
+//    sstm<<"/home/julia/Documents/data_base/Pavin1_ascii/pcd/scan2900.pcd";
     sstm<<"/home/julia/Documents/data_base/hokuyo/pcd/Hokuyo_"<<i<<".pcd";
 //    sstm<<"/home/julia/Documents/data_base/leica/pcd/sampled/1_04cm/SW"<<i<<".pcd";
 //    sstm<<"/home/julia/Documents/data_base/extracts/pcd/corner.pcd";
     file1 = sstm.str();
     std::string file2;
     sstm.str("");
+//    sstm<<"/home/julia/Documents/data_base/Pavin1_ascii/pcd/scan900.pcd";
     sstm<<"/home/julia/Documents/data_base/hokuyo/pcd/Hokuyo_"<<j<<".pcd";
 //    sstm<<"/home/julia/Documents/data_base/leica/pcd/sampled/1_04cm/SW"<<j<<".pcd";
 //    sstm<<"/home/julia/Documents/data_base/extracts/pcd/corner_moved_20.pcd";
@@ -45,6 +47,7 @@ int main(int argc, char *argv[])
 
     std::string transform_name;
     sstm.str("");
+//    sstm<<"/home/julia/Documents/data_base/Pavin1_ascii/transforms/my_method/closed_loop/scan2900_scan900.txt";
     sstm<<"/home/julia/Documents/data_base/hokuyo/transform/"<<argv[1]<<"/Hokuyo_"<<i<<"_Hokuyo_"<<j<<".txt";
 //    sstm<<"/home/julia/Documents/data_base/hokuyo/transform/"<<argv[1]<<"/"<<i<<"_"<<j<<".txt";
 
@@ -54,6 +57,7 @@ int main(int argc, char *argv[])
     std::cout<<transform_name<<std::endl<<std::endl;
     std::string ground_truth_name;
     sstm.str("");
+//    sstm<<"/home/julia/Documents/data_base/Pavin1_ascii/transforms/my_method/closed_loop/truth/scan2900_scan900.txt";
     sstm<<"/home/julia/Documents/data_base/hokuyo/transform/ground truth/"<<i<<"_"<<j<<".txt";
 //    sstm<<"/home/julia/Documents/data_base/leica/transforms/leica/SW"<<i<<"_SW"<<j<<".txt";
 //    sstm<<"/home/julia/Documents/data_base/extracts/transformations/truth_20.txt";
@@ -68,15 +72,14 @@ int main(int argc, char *argv[])
     pcl::KdTreeFLANN<pcl_point>::Ptr tree_tgt(new pcl::KdTreeFLANN<pcl_point>);
     tree_tgt->setInputCloud(cloud_tgt);
 
-
     pcl::PointCloud<pcl_point>::Ptr cloud_src_my_method(new pcl::PointCloud<pcl_point>);
     pcl::PointCloud<pcl_point>::Ptr cloud_src_leica(new pcl::PointCloud<pcl_point>);
 
     pcl::transformPointCloud (*cloud_src, *cloud_src_my_method, transform);
     pcl::transformPointCloud (*cloud_src, *cloud_src_leica, truth);
 
-//    float res=resolution(cloud_tgt, tree_tgt);
-//    std::cout<<"resolution : "<<res<<std::endl<<std::endl;
+    float res=resolution(cloud_tgt, tree_tgt);
+    std::cout<<"resolution : "<<res<<std::endl<<std::endl;
 
     //compute LCP and mean distance and RMSE
 
