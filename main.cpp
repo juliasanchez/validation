@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
     int j=atoi(argv[3]);
     std::stringstream sstm;
 
+
     std::string file1;
     sstm.str("");
 //    sstm<<"/home/julia/Documents/data_base/Pavin1_ascii/pcd/scan2900.pcd";
@@ -48,16 +49,19 @@ int main(int argc, char *argv[])
     std::string transform_name;
     sstm.str("");
 //    sstm<<"/home/julia/Documents/data_base/Pavin1_ascii/transforms/my_method/closed_loop/scan2900_scan900.txt";
+//    sstm<<"/home/julia/Desktop/my_programs/hist_registration/build-hist_registration/results/transformations/"<<argv[1]<<"/scan2900_scan900.txt";
     sstm<<"/home/julia/Documents/data_base/hokuyo/transform/"<<argv[1]<<"/Hokuyo_"<<i<<"_Hokuyo_"<<j<<".txt";
 //    sstm<<"/home/julia/Documents/data_base/hokuyo/transform/"<<argv[1]<<"/"<<i<<"_"<<j<<".txt";
 
-//    sstm<<"/home/julia/Documents/data_base/leica/transforms/leica_sans_cible/SW"<<i<<"_SW"<<j<<".txt";
-//    sstm<<"/home/julia/Documents/data_base/extracts/transformations/NDT/corners20.txt";
+//    sstm<<"/home/julia/Documents/data_base/leica/transforms/"<<argv[1]<<"/SW"<<i<<"_SW"<<j<<".txt";
+//    sstm<<"/home/julia/Documents/data_base/extracts/transformations/"<<argv[1]<<"/corner_corner_moved_20.txt";
     transform_name = sstm.str();
     std::cout<<transform_name<<std::endl<<std::endl;
     std::string ground_truth_name;
-    sstm.str("");
+    sstm.str("");  
 //    sstm<<"/home/julia/Documents/data_base/Pavin1_ascii/transforms/my_method/closed_loop/truth/scan2900_scan900.txt";
+//    sstm<<"/home/julia/Documents/data_base/Pavin1_ascii/transforms/my_method/pavin_5_80_5_2000_1v5/scan2900_scan900.txt";
+//    sstm<<"/home/julia/Documents/data_base/Pavin1_ascii/transforms/my_method/pavin_5_80_5_2000_1v5/closed loop/scan2900_scan900.txt";
     sstm<<"/home/julia/Documents/data_base/hokuyo/transform/ground truth/"<<i<<"_"<<j<<".txt";
 //    sstm<<"/home/julia/Documents/data_base/leica/transforms/leica/SW"<<i<<"_SW"<<j<<".txt";
 //    sstm<<"/home/julia/Documents/data_base/extracts/transformations/truth_20.txt";
@@ -148,6 +152,8 @@ int main(int argc, char *argv[])
     pcl::PointCloud<pcl_point> cloud_src_transformed;
     pcl::transformPointCloud (*cloud_src, cloud_src_transformed, truth);
 
+    pcl::io::savePCDFileASCII ("truth.pcd", cloud_src_transformed);
+
     std::vector<int> pointIdxNKNSearch(1);
     std::vector<float> pointNKNSquaredDistance(1);
     map<int, int> mapa;
@@ -172,6 +178,7 @@ int main(int argc, char *argv[])
     rmse1=sqrt(rmse1/points.size());
 
     pcl::transformPointCloud (*cloud_src, cloud_src_transformed, transform);
+    pcl::io::savePCDFileASCII ("closed_loop.pcd", cloud_src_transformed);
     float rmse0=0;
     float md0=0;
 
@@ -186,6 +193,7 @@ int main(int argc, char *argv[])
 
     md0=md0/points.size();
     rmse0=sqrt(rmse0/points.size());
+    std::cout<<md0<<std::endl<<std::endl;
 
     //---------------------------------------------------------------------------------------------------------
 
@@ -217,14 +225,12 @@ int main(int argc, char *argv[])
         <<LCP_truth*100<<" "<<LCP*100<<"\t"
         <<1/(1+error)<<"\t"
         <<error_trans<<"\t"
-        <<err_x<<" "<<err_y<<" "<<err_z<<"\t"
+        <<abs(err_x)*180/M_PI<<" "<<abs(err_y)*180/M_PI<<" "<<abs(err_z)*180/M_PI<<"\t"
         <<error_points<<"\t"
         <<time<<std::endl;
     file.close();
 
 }
-
-
 
 
 void load_matrix(std:: string file_name, Eigen::Matrix4f* matrix, float* time)
