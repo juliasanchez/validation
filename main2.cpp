@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
     name_kpts1 = sstm.str();
 
     std::string name_kpts2;
+
     sstm.str("");
     sstm<<"/home/julia/Documents/data_base/hokuyo/keypoints/"<<j<<"_"<<j<<"-"<<i<<".txt";
     name_kpts2 = sstm.str();
@@ -79,7 +80,7 @@ int main(int argc, char *argv[])
     float md_kpts=0;
     float RMSE=0;
     float RMSE_kpts=0;
-    get_LCP(cloud_src, tree_tgt, 0.02, &transform, &LCP, &md, &RMSE);
+    get_LCP( tree_tgt, cloud_src, 0.02, &transform, &LCP, &md, &RMSE);
     compare_kpts(keypoints1, keypoints2, &transform, &md_kpts, &RMSE_kpts);
 
     //---------------------------------------------------------------------------------------------------------
